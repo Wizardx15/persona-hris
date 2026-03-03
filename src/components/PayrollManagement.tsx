@@ -237,8 +237,12 @@ export default function PayrollManagement() {
             component_id: getComponentId('OVERTIME_WEEKDAY'),
             description: `Lembur (${overtimeHours.toFixed(1)} jam)`,
             amount: overtimePay,
-            calculation_base: hourlyRate,
-            calculation_details: { hours: overtimeHours }
+            {
+  payroll_id: payroll.id,
+  component_id: getComponentId('OVERTIME_WEEKDAY'),
+  description: `Lembur (${overtimeHours.toFixed(1)} jam)`,
+  amount: overtimePay,
+}
           })
         }
 
