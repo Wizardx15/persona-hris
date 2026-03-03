@@ -1,8 +1,9 @@
-import type { NextConfig } from 'next';
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ['ksmmijjfvshrjfkxxznz.supabase.co'],
+  },
+}
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  // Hapus semua opsi turbopack jika ada
-};
-
-export default nextConfig;
+module.exports = nextConfig
