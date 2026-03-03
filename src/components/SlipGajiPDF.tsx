@@ -68,7 +68,7 @@ export function generateSlipGajiPDF({ payroll, employee, period }: SlipGajiProps
       columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 70, halign: 'right' } },
       theme: 'plain',
       margin: { left: 20, right: 20 },
-      didDrawCell: (data) => {
+      didDrawCell: (data: { row: { index: number }, column: { index: number } }) => {
         // Tebalkan total (baris terakhir)
         if (data.row.index === 7 && data.column.index === 0) {
           doc.setFont('helvetica', 'bold')
