@@ -10,23 +10,23 @@
     "vercel-build": "npm install --legacy-peer-deps && next build"
   },
   "dependencies": {
-    "next": "15.2.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "@supabase/supabase-js": "^2.49.1",
-    "lucide-react": "^0.483.0",
-    "xlsx": "^0.18.5",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "jsqr": "^1.4.0",
+    "lucide-react": "^0.483.0",
+    "next": "15.2.6",
     "qrcode": "^1.5.4",
-    "resend": "^4.1.2"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^4.1.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.2.6",
     "tailwindcss": "^4",
