@@ -1,11 +1,10 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  turbopack: {
-    // Tentukan root directory secara manual
-    root: process.cwd(),
-  },
-}
+  // turbopack: {   // Hapus atau komentari bagian ini
+  //   root: process.cwd(),
+  // },
+};
 
-export default nextConfig
+export default nextConfig;
