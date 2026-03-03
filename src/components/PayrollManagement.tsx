@@ -237,13 +237,7 @@ export default function PayrollManagement() {
             component_id: getComponentId('OVERTIME_WEEKDAY'),
             description: `Lembur (${overtimeHours.toFixed(1)} jam)`,
             amount: overtimePay,
-            {
-  payroll_id: payroll.id,
-  component_id: getComponentId('OVERTIME_WEEKDAY'),
-  description: `Lembur (${overtimeHours.toFixed(1)} jam)`,
-  amount: overtimePay,
-}
-          })
+          });
         }
 
         await supabase.from('payroll_details').insert(details)
