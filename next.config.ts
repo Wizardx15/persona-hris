@@ -16,6 +16,6 @@ const config = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development'
-})(nextConfig);
+})(nextConfig as any);
 
 export default config;
