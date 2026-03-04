@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-// @ts-ignore - PWA config type conflict
+// @ts-ignore - PWA config
 import withPWA from 'next-pwa';
 const config = withPWA({
   dest: 'public',
