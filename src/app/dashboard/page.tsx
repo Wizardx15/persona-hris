@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   LogOut, Users, Clock, Calendar, DollarSign, User, 
   Briefcase, PlusCircle, CheckCircle, XCircle, Edit, Trash2,
-  Download, FileText, Camera
+  Download, FileText, Camera, Menu, X
 } from 'lucide-react'
 import PayrollManagement from '@/components/PayrollManagement'
 import ProfilePage from '@/components/ProfilePage'
@@ -14,6 +14,7 @@ import QRScanner from '@/components/QRScanner'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { useMediaQuery } from 'react-responsive'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [showQRGenerator, setShowQRGenerator] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [newEmployee, setNewEmployee] = useState({
     employee_id: '',
     full_name: '',
@@ -52,6 +54,8 @@ export default function DashboardPage() {
     phone: '',
     status: 'active'
   })
+
+  const isMobile = useMediaQuery({ maxWidth: 768 })
 
   useEffect(() => {
     checkUser()
@@ -398,6 +402,14 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-2 mr-2 hover:bg-gray-100 rounded-lg"
+                >
+                  {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              )}
               <h1 className="text-2xl font-bold text-gray-900">Persona</h1>
               <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">HRIS</span>
               {isAdmin && (
@@ -412,76 +424,102 @@ export default function DashboardPage() {
                 className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors"
               >
                 <User className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-900 font-medium">{employeeData?.full_name || user?.email}</span>
+                {!isMobile && <span className="text-sm text-gray-900 font-medium">{employeeData?.full_name || user?.email}</span>}
               </button>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                {!isMobile && 'Logout'}
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Sidebar & Main Content */}
-      <div className="pt-16 flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white h-[calc(100vh-4rem)] shadow-sm fixed overflow-y-auto">
+      {/* Sidebar Overlay (mobile) */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`pt-16 flex`}>
+        <div className={`
+          ${isMobile ? 'fixed z-30 transition-transform duration-300 ease-in-out' : ''}
+          ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+          w-64 bg-white h-[calc(100vh-4rem)] shadow-sm overflow-y-auto
+        `}>
           <div className="p-4">
             <div className="space-y-1">
               <button
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => {
+                  setActiveTab('dashboard')
+                  if (isMobile) setSidebarOpen(false)
+                }}
                 className={`w-full text-left px-4 py-2 rounded-lg flex items-center space-x-2 ${
                   activeTab === 'dashboard' ? 'bg-blue-50 text-blue-700' : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 <Users className="w-5 h-5" />
-                <span>Dashboard</span>
+                <span className="sidebar-text">Dashboard</span>
               </button>
               
               <button
-                onClick={() => setActiveTab('attendance')}
+                onClick={() => {
+                  setActiveTab('attendance')
+                  if (isMobile) setSidebarOpen(false)
+                }}
                 className={`w-full text-left px-4 py-2 rounded-lg flex items-center space-x-2 ${
                   activeTab === 'attendance' ? 'bg-blue-50 text-blue-700' : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 <Clock className="w-5 h-5" />
-                <span>Absensi</span>
+                <span className="sidebar-text">Absensi</span>
               </button>
               
               <button
-                onClick={() => setActiveTab('leave')}
+                onClick={() => {
+                  setActiveTab('leave')
+                  if (isMobile) setSidebarOpen(false)
+                }}
                 className={`w-full text-left px-4 py-2 rounded-lg flex items-center space-x-2 ${
                   activeTab === 'leave' ? 'bg-blue-50 text-blue-700' : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 <Calendar className="w-5 h-5" />
-                <span>Cuti</span>
+                <span className="sidebar-text">Cuti</span>
               </button>
               
               {isAdmin && (
                 <>
                   <button
-                    onClick={() => setActiveTab('employees')}
+                    onClick={() => {
+                      setActiveTab('employees')
+                      if (isMobile) setSidebarOpen(false)
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg flex items-center space-x-2 ${
                       activeTab === 'employees' ? 'bg-blue-50 text-blue-700' : 'text-gray-900 hover:bg-gray-100'
                     }`}
                   >
                     <Briefcase className="w-5 h-5" />
-                    <span>Kelola Karyawan</span>
+                    <span className="sidebar-text">Kelola Karyawan</span>
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('payroll')}
+                    onClick={() => {
+                      setActiveTab('payroll')
+                      if (isMobile) setSidebarOpen(false)
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg flex items-center space-x-2 ${
                       activeTab === 'payroll' ? 'bg-blue-50 text-blue-700' : 'text-gray-900 hover:bg-gray-100'
                     }`}
                   >
                     <DollarSign className="w-5 h-5" />
-                    <span>Penggajian</span>
+                    <span className="sidebar-text">Penggajian</span>
                   </button>
                 </>
               )}
@@ -489,17 +527,17 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="ml-64 flex-1 p-8">
+        {/* Main Content */}
+        <div className={`flex-1 p-4 md:p-8 ${isMobile ? 'ml-0' : 'ml-64'}`}>
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
-            <div>
+            <div className="fade-in">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">
                 Selamat Datang, {employeeData?.full_name || user?.email?.split('@')[0]}!
               </h2>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mobile-grid">
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="space-y-3">
@@ -623,58 +661,59 @@ export default function DashboardPage() {
 
           {/* Attendance Tab */}
           {activeTab === 'attendance' && (
-            <div>
+            <div className="fade-in">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Riwayat Absensi</h2>
               <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Check In</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Check Out</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {attendance.map((item: any) => (
-                      <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(item.date).toLocaleDateString('id-ID')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {item.check_in ? new Date(item.check_in).toLocaleTimeString('id-ID') : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {item.check_out ? new Date(item.check_out).toLocaleTimeString('id-ID') : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            item.status === 'present' ? 'bg-green-100 text-green-800' :
-                            item.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {item.status === 'present' ? 'Hadir' : 
-                             item.status === 'late' ? 'Terlambat' : 'Absen'}
-                          </span>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Check In</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Check Out</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {attendance.map((item: any) => (
+                        <tr key={item.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(item.date).toLocaleDateString('id-ID')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item.check_in ? new Date(item.check_in).toLocaleTimeString('id-ID') : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {item.check_out ? new Date(item.check_out).toLocaleTimeString('id-ID') : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              item.status === 'present' ? 'bg-green-100 text-green-800' :
+                              item.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {item.status === 'present' ? 'Hadir' : 
+                               item.status === 'late' ? 'Terlambat' : 'Absen'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {/* Employees Tab (Admin only) */}
           {activeTab === 'employees' && isAdmin && (
-            <div>
-              <div className="flex justify-between items-center mb-6">
+            <div className="fade-in">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <h2 className="text-2xl font-semibold text-gray-900">Kelola Karyawan</h2>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={exportToExcel}
                     className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
-                    title="Export ke Excel"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Excel
@@ -682,7 +721,6 @@ export default function DashboardPage() {
                   <button
                     onClick={exportToPDF}
                     className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg"
-                    title="Export ke PDF"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     PDF
@@ -692,263 +730,111 @@ export default function DashboardPage() {
                     className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
                   >
                     <PlusCircle className="w-4 h-4 mr-2" />
-                    Tambah Karyawan
+                    Tambah
                   </button>
                 </div>
               </div>
 
-              {/* Add Employee Modal */}
-              {showAddEmployee && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Tambah Karyawan Baru</h3>
-                    <form onSubmit={handleAddEmployee} className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="NIK"
-                        value={newEmployee.employee_id}
-                        onChange={(e) => setNewEmployee({...newEmployee, employee_id: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Nama Lengkap"
-                        value={newEmployee.full_name}
-                        onChange={(e) => setNewEmployee({...newEmployee, full_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                        required
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={newEmployee.email}
-                        onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Posisi"
-                        value={newEmployee.position}
-                        onChange={(e) => setNewEmployee({...newEmployee, position: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Departemen"
-                        value={newEmployee.department}
-                        onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                        required
-                      />
-                      <input
-                        type="date"
-                        placeholder="Tanggal Masuk"
-                        value={newEmployee.join_date}
-                        onChange={(e) => setNewEmployee({...newEmployee, join_date: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                      />
-                      <input
-                        type="text"
-                        placeholder="No. Telepon"
-                        value={newEmployee.phone}
-                        onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500"
-                      />
-                      <div className="flex space-x-2">
+              {/* Mobile Card View */}
+              {isMobile ? (
+                <div className="space-y-3">
+                  {employees.map((emp) => (
+                    <div key={emp.id} className="mobile-card">
+                      <div className="mobile-card-header">
+                        <span>{emp.full_name}</span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          emp.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {emp.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                      </div>
+                      <div className="mobile-card-body">
+                        <span className="mobile-card-label">NIK:</span>
+                        <span className="mobile-card-value">{emp.employee_id}</span>
+                        <span className="mobile-card-label">Email:</span>
+                        <span className="mobile-card-value">{emp.email}</span>
+                        <span className="mobile-card-label">Posisi:</span>
+                        <span className="mobile-card-value">{emp.position}</span>
+                        <span className="mobile-card-label">Departemen:</span>
+                        <span className="mobile-card-value">{emp.department}</span>
+                      </div>
+                      <div className="mobile-card-footer">
                         <button
-                          type="submit"
-                          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                          onClick={() => startEdit(emp)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
-                          Simpan
+                          <Edit className="w-5 h-5" />
                         </button>
                         <button
-                          type="button"
-                          onClick={() => setShowAddEmployee(false)}
-                          className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
+                          onClick={() => setShowDeleteConfirm(emp.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                         >
-                          Batal
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-              {/* Edit Employee Modal */}
-              {editingEmployee && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Karyawan</h3>
-                    <form onSubmit={handleEditEmployee} className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="NIK"
-                        value={editForm.employee_id}
-                        onChange={(e) => setEditForm({...editForm, employee_id: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Nama Lengkap"
-                        value={editForm.full_name}
-                        onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                        required
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Posisi"
-                        value={editForm.position}
-                        onChange={(e) => setEditForm({...editForm, position: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Departemen"
-                        value={editForm.department}
-                        onChange={(e) => setEditForm({...editForm, department: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                        required
-                      />
-                      <input
-                        type="date"
-                        placeholder="Tanggal Masuk"
-                        value={editForm.join_date}
-                        onChange={(e) => setEditForm({...editForm, join_date: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                      />
-                      <input
-                        type="text"
-                        placeholder="No. Telepon"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                      />
-                      <select
-                        value={editForm.status}
-                        onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
-                      >
-                        <option value="active">Aktif</option>
-                        <option value="inactive">Tidak Aktif</option>
-                      </select>
-                      <div className="flex space-x-2">
-                        <button
-                          type="submit"
-                          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                        >
-                          Update
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingEmployee(null)}
-                          className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
-                        >
-                          Batal
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-              {/* Delete Confirmation Modal */}
-              {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Konfirmasi Hapus</h3>
-                    <p className="text-gray-700 mb-6">
-                      Apakah Anda yakin ingin menghapus karyawan ini? Tindakan ini tidak dapat dibatalkan.
-                    </p>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleDeleteEmployee(showDeleteConfirm)}
-                        className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm(null)}
-                        className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
-                      >
-                        Batal
-                      </button>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                /* Desktop Table View */
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">NIK</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Posisi</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Departemen</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {employees.map((emp) => (
+                          <tr key={emp.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{emp.employee_id}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.full_name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.email}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.position}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.department}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                emp.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {emp.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => startEdit(emp)}
+                                  className="p-1 text-blue-600 hover:text-blue-800"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setShowDeleteConfirm(emp.id)}
+                                  className="p-1 text-red-600 hover:text-red-800"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
-
-              {/* Employees List with Actions */}
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">NIK</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Posisi</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Departemen</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {employees.map((emp) => (
-                      <tr key={emp.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{emp.employee_id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.full_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.position}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.department}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            emp.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {emp.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => startEdit(emp)}
-                              className="p-1 text-blue-600 hover:text-blue-800"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(emp.id)}
-                              className="p-1 text-red-600 hover:text-red-800"
-                              title="Hapus"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
           {/* Leave Requests Tab */}
           {activeTab === 'leave' && (
-            <div>
+            <div className="fade-in">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Pengajuan Cuti</h2>
               
               {/* Form Ajukan Cuti */}
@@ -956,16 +842,16 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Ajukan Cuti Baru</h3>
                 <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <select className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900">
-                    <option value="" className="text-gray-900">Pilih Jenis Cuti</option>
-                    <option value="annual" className="text-gray-900">Cuti Tahunan</option>
-                    <option value="sick" className="text-gray-900">Cuti Sakit</option>
-                    <option value="unpaid" className="text-gray-900">Cuti Tidak Dibayar</option>
+                    <option value="">Pilih Jenis Cuti</option>
+                    <option value="annual">Cuti Tahunan</option>
+                    <option value="sick">Cuti Sakit</option>
+                    <option value="unpaid">Cuti Tidak Dibayar</option>
                   </select>
                   <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   <textarea 
                     placeholder="Alasan" 
-                    className="px-3 py-2 border border-gray-300 rounded-lg md:col-span-2 text-gray-900 placeholder-gray-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg md:col-span-2 text-gray-900"
                     rows={3}
                   ></textarea>
                   <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:col-span-2">
@@ -977,72 +863,74 @@ export default function DashboardPage() {
               {/* Daftar Pengajuan Cuti */}
               <div className="bg-white rounded-lg shadow overflow-hidden">
                 <h3 className="text-lg font-semibold text-gray-900 p-6 pb-0">Riwayat Pengajuan Cuti</h3>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Jenis</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Alasan</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                      {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {leaveRequests.map((leave: any) => (
-                      <tr key={leave.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {leave.employees?.full_name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {leave.leave_type === 'annual' ? 'Cuti Tahunan' :
-                           leave.leave_type === 'sick' ? 'Cuti Sakit' : 'Cuti Tidak Dibayar'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(leave.start_date).toLocaleDateString('id-ID')} - {new Date(leave.end_date).toLocaleDateString('id-ID')}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{leave.reason}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {leave.status === 'approved' ? 'Disetujui' :
-                             leave.status === 'pending' ? 'Menunggu' : 'Ditolak'}
-                          </span>
-                        </td>
-                        {isAdmin && leave.status === 'pending' && (
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleLeaveAction(leave.id, 'approved')}
-                                className="p-1 text-green-600 hover:text-green-800"
-                                title="Setujui"
-                              >
-                                <CheckCircle className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => handleLeaveAction(leave.id, 'rejected')}
-                                className="p-1 text-red-600 hover:text-red-800"
-                                title="Tolak"
-                              >
-                                <XCircle className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </td>
-                        )}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Jenis</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Alasan</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                        {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {leaveRequests.map((leave: any) => (
+                        <tr key={leave.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {leave.employees?.full_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {leave.leave_type === 'annual' ? 'Cuti Tahunan' :
+                             leave.leave_type === 'sick' ? 'Cuti Sakit' : 'Cuti Tidak Dibayar'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(leave.start_date).toLocaleDateString('id-ID')} - {new Date(leave.end_date).toLocaleDateString('id-ID')}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{leave.reason}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {leave.status === 'approved' ? 'Disetujui' :
+                               leave.status === 'pending' ? 'Menunggu' : 'Ditolak'}
+                            </span>
+                          </td>
+                          {isAdmin && leave.status === 'pending' && (
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleLeaveAction(leave.id, 'approved')}
+                                  className="p-1 text-green-600 hover:text-green-800"
+                                >
+                                  <CheckCircle className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleLeaveAction(leave.id, 'rejected')}
+                                  className="p-1 text-red-600 hover:text-red-800"
+                                >
+                                  <XCircle className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {/* Payroll Tab (Admin only) */}
           {activeTab === 'payroll' && isAdmin && (
-            <PayrollManagement />
+            <div className="fade-in">
+              <PayrollManagement />
+            </div>
           )}
         </div>
       </div>
@@ -1068,14 +956,14 @@ export default function DashboardPage() {
       {/* QR Generator Modal */}
       {showQRGenerator && qrCodeUrl && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">QR Code Absensi</h3>
               <button
                 onClick={() => setShowQRGenerator(false)}
                 className="p-1 hover:bg-gray-100 rounded"
               >
-                <XCircle className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -1087,7 +975,7 @@ export default function DashboardPage() {
               Scan QR Code ini untuk absensi. Berlaku 24 jam.
             </p>
             
-            <div className="flex space-x-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <button
                 onClick={() => {
                   const link = document.createElement('a')
@@ -1104,6 +992,200 @@ export default function DashboardPage() {
                 className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Employee Modal */}
+      {showAddEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tambah Karyawan Baru</h3>
+            <form onSubmit={handleAddEmployee} className="space-y-4">
+              <input
+                type="text"
+                placeholder="NIK"
+                value={newEmployee.employee_id}
+                onChange={(e) => setNewEmployee({...newEmployee, employee_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Nama Lengkap"
+                value={newEmployee.full_name}
+                onChange={(e) => setNewEmployee({...newEmployee, full_name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={newEmployee.email}
+                onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Posisi"
+                value={newEmployee.position}
+                onChange={(e) => setNewEmployee({...newEmployee, position: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Departemen"
+                value={newEmployee.department}
+                onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="date"
+                placeholder="Tanggal Masuk"
+                value={newEmployee.join_date}
+                onChange={(e) => setNewEmployee({...newEmployee, join_date: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="No. Telepon"
+                value={newEmployee.phone}
+                onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <div className="flex flex-col md:flex-row gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  Simpan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEmployee(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Employee Modal */}
+      {editingEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Karyawan</h3>
+            <form onSubmit={handleEditEmployee} className="space-y-4">
+              <input
+                type="text"
+                placeholder="NIK"
+                value={editForm.employee_id}
+                onChange={(e) => setEditForm({...editForm, employee_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Nama Lengkap"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Posisi"
+                value={editForm.position}
+                onChange={(e) => setEditForm({...editForm, position: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Departemen"
+                value={editForm.department}
+                onChange={(e) => setEditForm({...editForm, department: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                required
+              />
+              <input
+                type="date"
+                placeholder="Tanggal Masuk"
+                value={editForm.join_date}
+                onChange={(e) => setEditForm({...editForm, join_date: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="No. Telepon"
+                value={editForm.phone}
+                onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <select
+                value={editForm.status}
+                onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              >
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
+              </select>
+              <div className="flex flex-col md:flex-row gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  Update
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingEmployee(null)}
+                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Konfirmasi Hapus</h3>
+            <p className="text-gray-700 mb-6">
+              Apakah Anda yakin ingin menghapus karyawan ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex flex-col md:flex-row gap-2">
+              <button
+                onClick={() => handleDeleteEmployee(showDeleteConfirm)}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              >
+                Hapus
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
+              >
+                Batal
               </button>
             </div>
           </div>
