@@ -23,6 +23,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/next-pwa": "^5.6.9",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
