@@ -16,21 +16,8 @@ const config = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // Tambah fallback untuk offline
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offline-cache',
-        expiration: {
-          maxEntries: 200,
-        },
-        networkTimeoutSeconds: 10,
-        fallback: '/offline', // <-- INI
-      },
-    },
-  ],
+  // Hapus konfigurasi runtimeCaching yang bermasalah
+  // Biarkan next-pwa menggunakan konfigurasi default
 })(nextConfig);
 
 export default config;
