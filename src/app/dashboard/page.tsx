@@ -34,6 +34,13 @@ export default function DashboardPage() {
   const [showQRGenerator, setShowQRGenerator] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showLeaveForm, setShowLeaveForm] = useState(false)
+  const [leaveFormData, setLeaveFormData] = useState({
+    leave_type: '',
+    start_date: '',
+    end_date: '',
+    reason: ''
+  })
   const [newEmployee, setNewEmployee] = useState({
     employee_id: '',
     full_name: '',
@@ -100,6 +107,7 @@ export default function DashboardPage() {
 
   async function fetchData() {
     try {
+      // Fetch employees
       const { data: employeesData } = await supabase
         .from('employees')
         .select('*')
@@ -107,19 +115,23 @@ export default function DashboardPage() {
       
       setEmployees(employeesData || [])
 
+      // Fetch leave requests with employee details
       const { data: leaveData } = await supabase
         .from('leave_requests')
         .select(`
           *,
           employees:employee_id (
             full_name,
-            employee_id
+            employee_id,
+            position,
+            department
           )
         `)
         .order('created_at', { ascending: false })
       
       setLeaveRequests(leaveData || [])
 
+      // Fetch today's attendance
       const today = new Date().toISOString().split('T')[0]
       const { data: attendanceData } = await supabase
         .from('attendance')
@@ -374,10 +386,57 @@ export default function DashboardPage() {
         .eq('id', id)
 
       if (error) throw error
-      fetchData()
-      alert(`Cuti berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}!`)
+      
+      // Refresh data
+      await fetchData()
+      
+      // Kirim notifikasi (opsional)
+      const leave = leaveRequests.find(l => l.id === id)
+      alert(`Cuti ${leave?.employees?.full_name} berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}!`)
+      
     } catch (error: any) {
       alert('Error updating leave request: ' + error.message)
+    }
+  }
+
+  async function handleSubmitLeave(e: React.FormEvent) {
+    e.preventDefault()
+    
+    if (!employeeData) {
+      alert('Data karyawan tidak ditemukan')
+      return
+    }
+
+    try {
+      // Hitung jumlah hari cuti
+      const start = new Date(leaveFormData.start_date)
+      const end = new Date(leaveFormData.end_date)
+      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
+      const { error } = await supabase
+        .from('leave_requests')
+        .insert([{
+          employee_id: employeeData.id,
+          leave_type: leaveFormData.leave_type,
+          start_date: leaveFormData.start_date,
+          end_date: leaveFormData.end_date,
+          reason: leaveFormData.reason,
+          status: 'pending'
+        }])
+
+      if (error) throw error
+
+      setShowLeaveForm(false)
+      setLeaveFormData({
+        leave_type: '',
+        start_date: '',
+        end_date: '',
+        reason: ''
+      })
+      fetchData()
+      alert('Pengajuan cuti berhasil dikirim!')
+    } catch (error: any) {
+      alert('Error submitting leave: ' + error.message)
     }
   }
 
@@ -563,7 +622,10 @@ export default function DashboardPage() {
                       Scan QR Absensi
                     </button>
                     <button 
-                      onClick={() => setActiveTab('leave')}
+                      onClick={() => {
+                        setActiveTab('leave')
+                        setShowLeaveForm(true)
+                      }}
                       className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg transition-colors flex items-center"
                     >
                       <Calendar className="w-5 h-5 mr-2" />
@@ -705,6 +767,176 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Leave Tab */}
+          {activeTab === 'leave' && (
+            <div className="fade-in">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Pengajuan Cuti</h2>
+                <button
+                  onClick={() => setShowLeaveForm(true)}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
+                >
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Ajukan Cuti
+                </button>
+              </div>
+              
+              {/* Leave Form Modal */}
+              {showLeaveForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Ajukan Cuti Baru</h3>
+                    <form onSubmit={handleSubmitLeave} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Cuti</label>
+                        <select
+                          value={leaveFormData.leave_type}
+                          onChange={(e) => setLeaveFormData({...leaveFormData, leave_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                          required
+                        >
+                          <option value="">Pilih Jenis Cuti</option>
+                          <option value="annual">Cuti Tahunan</option>
+                          <option value="sick">Cuti Sakit</option>
+                          <option value="unpaid">Cuti Tidak Dibayar</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                        <input
+                          type="date"
+                          value={leaveFormData.start_date}
+                          onChange={(e) => setLeaveFormData({...leaveFormData, start_date: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label>
+                        <input
+                          type="date"
+                          value={leaveFormData.end_date}
+                          onChange={(e) => setLeaveFormData({...leaveFormData, end_date: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Alasan</label>
+                        <textarea
+                          value={leaveFormData.reason}
+                          onChange={(e) => setLeaveFormData({...leaveFormData, reason: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+                          rows={3}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="flex flex-col md:flex-row gap-2 pt-4">
+                        <button
+                          type="submit"
+                          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                        >
+                          Kirim Pengajuan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowLeaveForm(false)}
+                          className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Leave Requests List */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Jenis</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Alasan</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                        {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {leaveRequests.length > 0 ? (
+                        leaveRequests.map((leave: any) => (
+                          <tr key={leave.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {leave.employees?.full_name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {leave.leave_type === 'annual' ? 'Cuti Tahunan' :
+                               leave.leave_type === 'sick' ? 'Cuti Sakit' : 'Cuti Tidak Dibayar'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(leave.start_date).toLocaleDateString('id-ID')} - {new Date(leave.end_date).toLocaleDateString('id-ID')}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{leave.reason}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {leave.status === 'approved' ? 'Disetujui' :
+                                 leave.status === 'pending' ? 'Menunggu' : 'Ditolak'}
+                              </span>
+                            </td>
+                            {/* TOMBOL APPROVE/REJECT UNTUK ADMIN */}
+                            {isAdmin && leave.status === 'pending' && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleLeaveAction(leave.id, 'approved')}
+                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                    title="Setujui"
+                                  >
+                                    <CheckCircle className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleLeaveAction(leave.id, 'rejected')}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Tolak"
+                                  >
+                                    <XCircle className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                            {/* Tampilkan info approve untuk status yang sudah diproses */}
+                            {isAdmin && leave.status !== 'pending' && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {leave.status === 'approved' ? '✓ Disetujui' : '✗ Ditolak'}
+                              </td>
+                            )}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={isAdmin ? 6 : 5} className="px-6 py-4 text-center text-gray-500">
+                            Belum ada pengajuan cuti
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Employees Tab (Admin only) */}
           {activeTab === 'employees' && isAdmin && (
             <div className="fade-in">
@@ -829,100 +1061,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Leave Requests Tab */}
-          {activeTab === 'leave' && (
-            <div className="fade-in">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Pengajuan Cuti</h2>
-              
-              {/* Form Ajukan Cuti */}
-              <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ajukan Cuti Baru</h3>
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <select className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900">
-                    <option value="">Pilih Jenis Cuti</option>
-                    <option value="annual">Cuti Tahunan</option>
-                    <option value="sick">Cuti Sakit</option>
-                    <option value="unpaid">Cuti Tidak Dibayar</option>
-                  </select>
-                  <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  <textarea 
-                    placeholder="Alasan" 
-                    className="px-3 py-2 border border-gray-300 rounded-lg md:col-span-2 text-gray-900"
-                    rows={3}
-                  ></textarea>
-                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:col-span-2">
-                    Ajukan Cuti
-                  </button>
-                </form>
-              </div>
-
-              {/* Daftar Pengajuan Cuti */}
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <h3 className="text-lg font-semibold text-gray-900 p-6 pb-0">Riwayat Pengajuan Cuti</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Jenis</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Tanggal</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Alasan</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                        {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {leaveRequests.map((leave: any) => (
-                        <tr key={leave.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {leave.employees?.full_name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {leave.leave_type === 'annual' ? 'Cuti Tahunan' :
-                             leave.leave_type === 'sick' ? 'Cuti Sakit' : 'Cuti Tidak Dibayar'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(leave.start_date).toLocaleDateString('id-ID')} - {new Date(leave.end_date).toLocaleDateString('id-ID')}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{leave.reason}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {leave.status === 'approved' ? 'Disetujui' :
-                               leave.status === 'pending' ? 'Menunggu' : 'Ditolak'}
-                            </span>
-                          </td>
-                          {isAdmin && leave.status === 'pending' && (
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleLeaveAction(leave.id, 'approved')}
-                                  className="p-1 text-green-600 hover:text-green-800"
-                                >
-                                  <CheckCircle className="w-5 h-5" />
-                                </button>
-                                <button
-                                  onClick={() => handleLeaveAction(leave.id, 'rejected')}
-                                  className="p-1 text-red-600 hover:text-red-800"
-                                >
-                                  <XCircle className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
           )}
 
