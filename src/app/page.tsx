@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Users, Clock, Calendar, DollarSign, LogIn, AlertCircle } from 'lucide-react'
+import { Users, Clock, Calendar, DollarSign, LogIn, AlertCircle, Loader } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Home() {
   const router = useRouter()
@@ -47,13 +48,64 @@ export default function Home() {
     }
   }
 
+  // Tampilkan skeleton loading (lebih bagus dari spinner)
   if (checking || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-900 font-medium">Memuat Persona HRIS...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Navbar Skeleton */}
+        <nav className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <div className="h-8 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+                <div className="ml-2 h-5 w-12 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Hero Section Skeleton */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center mb-12">
+            <div className="h-12 bg-gray-200 rounded-lg w-96 mx-auto mb-4 animate-pulse"></div>
+            <div className="h-6 bg-gray-200 rounded-lg w-2/3 mx-auto animate-pulse"></div>
+          </div>
+
+          {/* Status Card Skeleton */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="h-6 w-32 bg-gray-200 rounded mb-4 animate-pulse"></div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="h-6 w-40 bg-gray-200 rounded mb-4 animate-pulse"></div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-gray-100 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     )
   }
@@ -212,6 +264,15 @@ export default function Home() {
           </p>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-center text-sm text-gray-600">
+            © {new Date().getFullYear()} Persona HRIS. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
