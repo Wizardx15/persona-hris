@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+type Params = Promise<{ name: string }>
+
 export async function GET(
   request: Request,
-  { params }: { params: { name: string } }
+  { params }: { params: Params }
 ) {
   try {
-    const departmentName = decodeURIComponent(params.name)
+    const { name } = await params
+    const departmentName = decodeURIComponent(name)
     
-    // Mapping untuk nama department yang umum
+    // Mapping untuk nama department
     const departmentMap: Record<string, string> = {
       'hr': 'Human Resources',
       'hcm': 'Human Resources',
@@ -19,7 +22,6 @@ export async function GET(
       'production': 'Produksi'
     }
 
-    // Cari department yang match
     const searchDept = departmentMap[departmentName.toLowerCase()] || departmentName
     
     const { data: employees, error } = await supabase

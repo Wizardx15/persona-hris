@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+// Next.js 15: params harus dideclare sebagai Promise
+type Params = Promise<{ nik: string }>
+
 export async function GET(
   request: Request,
-  { params }: { params: { nik: string } }
+  { params }: { params: Params }
 ) {
   try {
+    // Await params dulu
+    const { nik } = await params
+    
     const { data: employee, error } = await supabase
       .from('employees')
       .select(`
@@ -24,7 +30,7 @@ export async function GET(
         emergency_contact,
         created_at
       `)
-      .eq('employee_id', params.nik)
+      .eq('employee_id', nik)
       .single()
 
     if (error || !employee) {
@@ -64,7 +70,6 @@ export async function GET(
       address: employee.address || profile?.address,
       emergency_contact: employee.emergency_contact || profile?.emergency_name,
       created_at: employee.created_at,
-      // Data tambahan (optional)
       salary: salary ? {
         basic_salary: salary.basic_salary,
         bank_name: salary.bank_name,
